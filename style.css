@@ -11,6 +11,14 @@ body {
     padding: 20px;
 }
 
+/* Permetti selezione su input, textarea e altri elementi utili */
+input, textarea, button, .btn, header, h1, h2, h3, p {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
 .container {
     max-width: 1600px;
     margin: 0 auto;
@@ -101,6 +109,11 @@ header p {
     box-shadow: 0 1.5px 3.75px rgba(0,0,0,0.2);
     transition: transform 0.2s, box-shadow 0.2s;
     user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
     font-size: 0.75em;
 }
 
@@ -171,6 +184,11 @@ header p {
     border-radius: 8px;
     padding: 15px;
     overflow-y: auto;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .empty-message {
@@ -196,6 +214,12 @@ header p {
     box-shadow: 0 1.5px 3.75px rgba(0,0,0,0.2);
     position: relative;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
     font-size: 0.75em;
 }
 
@@ -252,6 +276,12 @@ header p {
     align-items: center;
     gap: 7.5px;
     font-size: 0.75em;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
 }
 
 .loop-content {
@@ -262,6 +292,11 @@ header p {
     border-radius: 4.5px;
     padding: 11px;
     margin-top: 3.75px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .controls {
