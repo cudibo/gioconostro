@@ -16,6 +16,9 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
+    /* Prevent bounce scrolling on iOS */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -23,10 +26,14 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+    min-height: -webkit-fill-available; /* iOS Safari fix */
     overflow-x: hidden;
+    overflow-y: hidden;
     touch-action: manipulation;
     /* Support for iPhone X and later with notch - safe area insets */
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    /* Prevent pull-to-refresh on iOS */
+    overscroll-behavior-y: none;
 }
 
 .mobile-container {
@@ -34,10 +41,12 @@ body {
     margin: 0 auto;
     height: 100vh;
     height: 100dvh; /* Dynamic viewport height */
+    height: -webkit-fill-available; /* iOS Safari fix */
     display: flex;
     flex-direction: column;
     padding: 5px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 header {

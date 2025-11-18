@@ -1,5 +1,5 @@
 // Game version
-const GAME_VERSION = '0.2';
+const GAME_VERSION = '0.3';
 
 // Game configuration
 const gameConfig = {
@@ -49,8 +49,12 @@ function resizeCanvas() {
     
     const maxWidth = container.clientWidth - 40; // padding
     // Use available viewport height for fullscreen experience
+    // On iOS, use innerHeight which excludes the address bar when hidden
     const availableHeight = window.innerHeight || document.documentElement.clientHeight;
-    const maxHeight = availableHeight * 0.65; // Use more of the screen
+    // Use more of the screen, accounting for header and controls
+    const headerHeight = document.querySelector('header')?.offsetHeight || 60;
+    const controlsHeight = document.querySelector('.controls')?.offsetHeight || 50;
+    const maxHeight = availableHeight - headerHeight - controlsHeight - 30; // Extra padding
     
     const newWidth = Math.max(300, Math.min(maxWidth, 600));
     const newHeight = Math.max(250, Math.min(maxHeight, 400));
@@ -644,30 +648,84 @@ function handleViewportResize() {
         lastTouchEnd = now;
     }, false);
     
-    // Hide address bar on iOS Safari by scrolling
-    window.addEventListener('load', function() {
-        setTimeout(function() {
-            window.scrollTo(0, 1);
-        }, 0);
-    });
+    // Aggressive technique to hide address bar on iOS Safari
+    function hideAddressBar() {
+        // Force scroll to hide address bar
+        window.scrollTo(0, 1);
+        
+        // Try multiple times with delays
+        setTimeout(() => window.scrollTo(0, 1), 100);
+        setTimeout(() => window.scrollTo(0, 1), 300);
+        setTimeout(() => window.scrollTo(0, 1), 500);
+        
+        // Also try scrolling by a small amount
+        setTimeout(() => {
+            window.scrollTo(0, window.pageYOffset || document.documentElement.scrollTop || 0);
+        }, 700);
+    }
     
-    // Handle orientation changes
+    // Hide address bar on load
+    window.addEventListener('load', hideAddressBar);
+    
+    // Hide address bar on orientation change
     window.addEventListener('orientationchange', function() {
         setTimeout(() => {
+            hideAddressBar();
             resizeCanvas();
             initJoystick();
-        }, 200);
+        }, 100);
     });
     
-    // Handle resize
+    // Hide address bar on touch start (when user interacts)
+    document.addEventListener('touchstart', function() {
+        setTimeout(hideAddressBar, 100);
+    }, { once: false });
+    
+    // Handle resize - detect when address bar hides/shows
+    let lastHeight = window.innerHeight;
     let resizeTimer;
     window.addEventListener('resize', function() {
+        const currentHeight = window.innerHeight;
+        
+        // If height increased, address bar might have hidden
+        if (currentHeight > lastHeight) {
+            hideAddressBar();
+        }
+        lastHeight = currentHeight;
+        
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
             resizeCanvas();
             initJoystick();
         }, 150);
     });
+    
+    // Try to enter fullscreen if API is available
+    function tryFullscreen() {
+        const doc = document.documentElement;
+        if (doc.requestFullscreen) {
+            doc.requestFullscreen().catch(() => {
+                // Fullscreen not available or denied
+            });
+        } else if (doc.webkitRequestFullscreen) {
+            doc.webkitRequestFullscreen();
+        } else if (doc.webkitEnterFullscreen) {
+            doc.webkitEnterFullscreen();
+        } else if (doc.mozRequestFullScreen) {
+            doc.mozRequestFullScreen();
+        } else if (doc.msRequestFullscreen) {
+            doc.msRequestFullscreen();
+        }
+    }
+    
+    // Try fullscreen on first user interaction
+    let fullscreenAttempted = false;
+    document.addEventListener('touchstart', function() {
+        if (!fullscreenAttempted) {
+            fullscreenAttempted = true;
+            setTimeout(tryFullscreen, 500);
+        }
+    }, { once: true });
 }
 
 // Initialize everything when DOM is ready
