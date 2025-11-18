@@ -1,5 +1,5 @@
 // Game version
-const GAME_VERSION = '0.3';
+const GAME_VERSION = '0.4';
 
 // Game configuration
 const gameConfig = {
@@ -467,135 +467,8 @@ function checkCollisions() {
 }
 
 function drawGame() {
-    if (!canvas || !ctx || canvas.width === 0 || canvas.height === 0) {
-        return;
-    }
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Enable image smoothing for better quality
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    
-    // Draw map background
-    if (images.map.complete) {
-        ctx.drawImage(images.map, 0, 0, canvas.width, canvas.height);
-    } else {
-        ctx.fillStyle = '#e9ecef';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    
-    // Draw collision zones (for debugging - semi-transparent red)
-    if (gameState.scaledCollisionZones) {
-        gameState.scaledCollisionZones.forEach(zone => {
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red
-            ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.6)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
-        });
-    }
-    
-    // Draw goal
-    ctx.fillStyle = '#28a745';
-    ctx.beginPath();
-    ctx.arc(gameState.goal.x + gameState.goal.size/2, gameState.goal.y + gameState.goal.size/2, gameState.goal.size/2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#155724';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Draw flag on goal
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(gameState.goal.x + gameState.goal.size/2, gameState.goal.y, 3, gameState.goal.size/2);
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.moveTo(gameState.goal.x + gameState.goal.size/2 + 3, gameState.goal.y);
-    ctx.lineTo(gameState.goal.x + gameState.goal.size/2 + 3, gameState.goal.y + gameState.goal.size/4);
-    ctx.lineTo(gameState.goal.x + gameState.goal.size/2 + 15, gameState.goal.y + gameState.goal.size/8);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Draw monster with shadow and border
-    if (images.monster.complete) {
-        // Draw shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 3;
-        
-        // Draw white border/outline
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(gameState.monster.x + gameState.monster.size/2, gameState.monster.y + gameState.monster.size/2, gameState.monster.size/2 + 2, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Draw red border for visibility
-        ctx.strokeStyle = '#dc3545';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(gameState.monster.x + gameState.monster.size/2, gameState.monster.y + gameState.monster.size/2, gameState.monster.size/2 + 1, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Reset shadow
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Draw monster image
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(gameState.monster.x + gameState.monster.size/2, gameState.monster.y + gameState.monster.size/2, gameState.monster.size/2, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(images.monster, gameState.monster.x, gameState.monster.y, gameState.monster.size, gameState.monster.size);
-        ctx.restore();
-    } else {
-        ctx.fillStyle = '#dc3545';
-        ctx.fillRect(gameState.monster.x, gameState.monster.y, gameState.monster.size, gameState.monster.size);
-    }
-    
-    // Draw hero with shadow and border
-    if (images.hero.complete) {
-        // Draw shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 3;
-        
-        // Draw white border/outline
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(gameState.hero.x + gameState.hero.size/2, gameState.hero.y + gameState.hero.size/2, gameState.hero.size/2 + 2, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Draw blue border for visibility
-        ctx.strokeStyle = '#007bff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(gameState.hero.x + gameState.hero.size/2, gameState.hero.y + gameState.hero.size/2, gameState.hero.size/2 + 1, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Reset shadow
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Draw hero image
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(gameState.hero.x + gameState.hero.size/2, gameState.hero.y + gameState.hero.size/2, gameState.hero.size/2, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(images.hero, gameState.hero.x, gameState.hero.y, gameState.hero.size, gameState.hero.size);
-        ctx.restore();
-    } else {
-        ctx.fillStyle = '#007bff';
-        ctx.fillRect(gameState.hero.x, gameState.hero.y, gameState.hero.size, gameState.hero.size);
-    }
+    // Use common rendering function (collision zones shown in mobile version for debugging)
+    drawGameScene(ctx, canvas, gameState, images, true);
 }
 
 function showStatus(message, type) {
