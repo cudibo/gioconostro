@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gioco del Codice - Evita il Mostro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Gioco del Codice</h1>
+            <p>Trascina i blocchi per far muovere l'eroe e raggiungere l'obiettivo senza incontrare il mostro!</p>
+        </header>
+
+        <div class="game-area">
+            <div class="game-canvas-container">
+                <h2>Gioco</h2>
+                <canvas id="gameCanvas"></canvas>
+                <div id="game-status" class="game-status"></div>
+            </div>
+
+            <div class="right-column">
+                <div class="blocks-palette">
+                    <h2>Blocchi Disponibili</h2>
+                    <div class="block-category">
+                        <h3>Movimento</h3>
+                        <div class="block" data-command="move-up" draggable="true">
+                            <span class="block-icon">⬆️</span>
+                            <span class="block-text">Vai Su</span>
+                        </div>
+                        <div class="block" data-command="move-down" draggable="true">
+                            <span class="block-icon">⬇️</span>
+                            <span class="block-text">Vai Giù</span>
+                        </div>
+                        <div class="block" data-command="move-left" draggable="true">
+                            <span class="block-icon">⬅️</span>
+                            <span class="block-text">Vai Sinistra</span>
+                        </div>
+                        <div class="block" data-command="move-right" draggable="true">
+                            <span class="block-icon">➡️</span>
+                            <span class="block-text">Vai Destra</span>
+                        </div>
+                    </div>
+                    <div class="block-category">
+                        <h3>Ripetizioni</h3>
+                        <div class="block block-loop" data-command="repeat" draggable="true">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-text">Ripeti</span>
+                            <input type="number" class="loop-count" value="2" min="1" max="10">
+                            <span class="block-text">volte</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workspace">
+                    <h2>Il Tuo Programma</h2>
+                    <div class="workspace-area" id="workspace">
+                        <p class="empty-message">Trascina qui i blocchi per creare il tuo programma</p>
+                    </div>
+                    <div class="controls">
+                        <button id="run-btn" class="btn btn-run">▶️ Esegui</button>
+                        <button id="reset-btn" class="btn btn-reset">🔄 Reset</button>
+                        <button id="clear-btn" class="btn btn-clear">🗑️ Pulisci</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
+
