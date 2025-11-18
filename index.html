@@ -14,13 +14,20 @@
         </header>
 
         <div class="game-area">
-            <div class="game-canvas-container">
-                <h2>Gioco</h2>
-                <canvas id="gameCanvas"></canvas>
-                <div id="game-status" class="game-status"></div>
+            <div class="top-section">
+                <div class="game-canvas-container">
+                    <h2>Gioco</h2>
+                    <canvas id="gameCanvas"></canvas>
+                    <div id="game-status" class="game-status"></div>
+                </div>
+                <div class="controls">
+                    <button id="run-btn" class="btn btn-run">▶️ Esegui</button>
+                    <button id="reset-btn" class="btn btn-reset">🔄 Reset</button>
+                    <button id="clear-btn" class="btn btn-clear">🗑️ Pulisci</button>
+                </div>
             </div>
 
-            <div class="right-column">
+            <div class="bottom-section">
                 <div class="blocks-palette">
                     <h2>Blocchi Disponibili</h2>
                     <div class="block-category">
@@ -57,11 +64,6 @@
                     <h2>Il Tuo Programma</h2>
                     <div class="workspace-area" id="workspace">
                         <p class="empty-message">Trascina qui i blocchi per creare il tuo programma</p>
-                    </div>
-                    <div class="controls">
-                        <button id="run-btn" class="btn btn-run">▶️ Esegui</button>
-                        <button id="reset-btn" class="btn btn-reset">🔄 Reset</button>
-                        <button id="clear-btn" class="btn btn-clear">🗑️ Pulisci</button>
                     </div>
                 </div>
             </div>
