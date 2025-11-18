@@ -45,7 +45,9 @@ function resizeCanvas() {
     }
     
     const maxWidth = container.clientWidth - 40; // padding
-    const maxHeight = window.innerHeight * 0.6;
+    // Use available viewport height for fullscreen experience
+    const availableHeight = window.innerHeight || document.documentElement.clientHeight;
+    const maxHeight = availableHeight * 0.65; // Use more of the screen
     
     const newWidth = Math.max(300, Math.min(maxWidth, 600));
     const newHeight = Math.max(250, Math.min(maxHeight, 400));
@@ -604,8 +606,47 @@ function resetGame() {
     drawGame();
 }
 
+// Handle viewport changes for fullscreen on mobile
+function handleViewportResize() {
+    // Prevent zoom on double tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+    
+    // Hide address bar on iOS Safari by scrolling
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            window.scrollTo(0, 1);
+        }, 0);
+    });
+    
+    // Handle orientation changes
+    window.addEventListener('orientationchange', function() {
+        setTimeout(() => {
+            resizeCanvas();
+            initJoystick();
+        }, 200);
+    });
+    
+    // Handle resize
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            resizeCanvas();
+            initJoystick();
+        }, 150);
+    });
+}
+
 // Initialize everything when DOM is ready
 function init() {
+    handleViewportResize();
     resizeCanvas();
     loadImages();
     
@@ -629,13 +670,5 @@ if (document.readyState === 'loading') {
     init();
 }
 
-window.addEventListener('resize', () => {
-    setTimeout(resizeCanvas, 100);
-});
-window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-        resizeCanvas();
-        drawGame();
-    }, 200);
-});
+// Resize and orientation handlers are now in handleViewportResize()
 
