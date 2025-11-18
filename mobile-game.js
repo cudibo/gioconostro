@@ -1,3 +1,6 @@
+// Game version
+const GAME_VERSION = '0.2';
+
 // Game configuration
 const gameConfig = {
     images: {
@@ -179,22 +182,52 @@ function updateJoystickPosition(x, y) {
     const offsetY = y - joystickState.baseY;
     joystickStick.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
     
-    // Calculate direction
+    // Calculate direction with 8 directions (including diagonals)
     const deadZone = joystickState.baseRadius * 0.3; // 30% dead zone
     if (distance < deadZone) {
         joystickState.direction = null;
+        joystickState.directionX = 0;
+        joystickState.directionY = 0;
     } else {
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
         
-        // Determine primary direction (up, down, left, right)
-        if (angle >= -45 && angle < 45) {
+        // Normalize direction vector for smooth diagonal movement
+        const normalizedDx = dx / distance;
+        const normalizedDy = dy / distance;
+        
+        // Determine direction (8 directions: up, down, left, right, and 4 diagonals)
+        if (angle >= -22.5 && angle < 22.5) {
             joystickState.direction = 'right';
-        } else if (angle >= 45 && angle < 135) {
+            joystickState.directionX = 1;
+            joystickState.directionY = 0;
+        } else if (angle >= 22.5 && angle < 67.5) {
+            joystickState.direction = 'down-right';
+            joystickState.directionX = normalizedDx;
+            joystickState.directionY = normalizedDy;
+        } else if (angle >= 67.5 && angle < 112.5) {
             joystickState.direction = 'down';
-        } else if (angle >= 135 || angle < -135) {
+            joystickState.directionX = 0;
+            joystickState.directionY = 1;
+        } else if (angle >= 112.5 && angle < 157.5) {
+            joystickState.direction = 'down-left';
+            joystickState.directionX = normalizedDx;
+            joystickState.directionY = normalizedDy;
+        } else if (angle >= 157.5 || angle < -157.5) {
             joystickState.direction = 'left';
-        } else {
+            joystickState.directionX = -1;
+            joystickState.directionY = 0;
+        } else if (angle >= -157.5 && angle < -112.5) {
+            joystickState.direction = 'up-left';
+            joystickState.directionX = normalizedDx;
+            joystickState.directionY = normalizedDy;
+        } else if (angle >= -112.5 && angle < -67.5) {
             joystickState.direction = 'up';
+            joystickState.directionX = 0;
+            joystickState.directionY = -1;
+        } else {
+            joystickState.direction = 'up-right';
+            joystickState.directionX = normalizedDx;
+            joystickState.directionY = normalizedDy;
         }
     }
 }
@@ -203,6 +236,8 @@ function updateJoystickPosition(x, y) {
 function resetJoystick() {
     joystickState.isActive = false;
     joystickState.direction = null;
+    joystickState.directionX = 0;
+    joystickState.directionY = 0;
     const joystickStick = document.getElementById('joystickStick');
     if (joystickStick) {
         // Reset to center position (CSS uses translate(-50%, -50%) for centering)
@@ -293,28 +328,19 @@ function updateGame() {
         return;
     }
     
-    // Move hero based on joystick direction
-    if (joystickState.direction && gameState.isRunning) {
+    // Move hero based on joystick direction (supports 8 directions including diagonals)
+    if (joystickState.direction && gameState.isRunning && (joystickState.directionX !== 0 || joystickState.directionY !== 0)) {
         const stepSize = gameState.hero.speed;
         const oldX = gameState.hero.x;
         const oldY = gameState.hero.y;
-        let newX = oldX;
-        let newY = oldY;
         
-        switch(joystickState.direction) {
-            case 'up':
-                newY = Math.max(0, oldY - stepSize);
-                break;
-            case 'down':
-                newY = Math.min(canvas.height - gameState.hero.size, oldY + stepSize);
-                break;
-            case 'left':
-                newX = Math.max(0, oldX - stepSize);
-                break;
-            case 'right':
-                newX = Math.min(canvas.width - gameState.hero.size, oldX + stepSize);
-                break;
-        }
+        // Calculate new position using direction vector (allows diagonal movement)
+        let newX = oldX + (joystickState.directionX * stepSize);
+        let newY = oldY + (joystickState.directionY * stepSize);
+        
+        // Keep within bounds
+        newX = Math.max(0, Math.min(canvas.width - gameState.hero.size, newX));
+        newY = Math.max(0, Math.min(canvas.height - gameState.hero.size, newY));
         
         // Only move if the new position is valid (no collision with obstacles)
         if (isValidPosition(newX, newY, gameState.hero.size)) {
@@ -649,6 +675,12 @@ function init() {
     handleViewportResize();
     resizeCanvas();
     loadImages();
+    
+    // Display version
+    const versionOverlay = document.getElementById('versionOverlay');
+    if (versionOverlay) {
+        versionOverlay.textContent = `v${GAME_VERSION}`;
+    }
     
     // Event listeners
     const resetBtn = document.getElementById('reset-btn');
