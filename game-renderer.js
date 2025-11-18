@@ -118,9 +118,9 @@ function drawHero(ctx, hero, images) {
  * @param {HTMLCanvasElement} canvas - Canvas element
  * @param {Object} gameState - Game state object
  * @param {Object} images - Image objects
- * @param {boolean} drawCollisionZones - Whether to draw collision zones (for debugging)
+ * @param {boolean} showCollisionZones - Whether to draw collision zones (for debugging)
  */
-function drawGameScene(ctx, canvas, gameState, images, drawCollisionZones = false) {
+function drawGameScene(ctx, canvas, gameState, images, showCollisionZones = false) {
     // Check if canvas is valid
     if (!canvas || !ctx || canvas.width === 0 || canvas.height === 0) {
         return;
@@ -137,7 +137,7 @@ function drawGameScene(ctx, canvas, gameState, images, drawCollisionZones = fals
     drawMapBackground(ctx, canvas, images);
     
     // Draw collision zones (optional, for debugging)
-    if (drawCollisionZones) {
+    if (showCollisionZones) {
         drawCollisionZones(ctx, gameState);
     }
     

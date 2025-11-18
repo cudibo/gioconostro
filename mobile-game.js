@@ -32,12 +32,21 @@ const gameState = {
 // Canvas setup
 let canvas, ctx;
 
-// Set canvas size for mobile horizontal mode
-function resizeCanvas() {
+// Initialize canvas and context
+function initCanvas() {
     if (!canvas) {
         canvas = document.getElementById('gameCanvas');
-        if (!canvas) return;
-        ctx = canvas.getContext('2d');
+        if (canvas) {
+            ctx = canvas.getContext('2d');
+        }
+    }
+    return canvas && ctx;
+}
+
+// Set canvas size for mobile horizontal mode
+function resizeCanvas() {
+    if (!initCanvas()) {
+        return;
     }
     
     const container = document.querySelector('.game-canvas-container');
@@ -467,6 +476,17 @@ function checkCollisions() {
 }
 
 function drawGame() {
+    // Ensure canvas and ctx are initialized
+    if (!canvas || !ctx) {
+        // Try to get canvas if not initialized
+        canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            ctx = canvas.getContext('2d');
+        } else {
+            return; // Canvas not ready yet
+        }
+    }
+    
     // Use common rendering function (collision zones shown in mobile version for debugging)
     drawGameScene(ctx, canvas, gameState, images, true);
 }
@@ -603,6 +623,9 @@ function handleViewportResize() {
 
 // Initialize everything when DOM is ready
 function init() {
+    // Initialize canvas first
+    initCanvas();
+    
     handleViewportResize();
     resizeCanvas();
     loadImages();
