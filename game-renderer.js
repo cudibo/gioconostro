@@ -19,9 +19,9 @@ function drawMapBackground(ctx, canvas, images) {
 function drawCollisionZones(ctx, gameState) {
     if (gameState.scaledCollisionZones) {
         gameState.scaledCollisionZones.forEach(zone => {
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'; // Semi-transparent red
             ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.6)';
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.2)';
             ctx.lineWidth = 2;
             ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
         });
