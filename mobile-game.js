@@ -18,9 +18,9 @@ const collisionZones = [
 
 // Game state
 const gameState = {
-    hero: { x: 50, y: 50, size: 60, speed: 3 },
-    monster: { x: 400, y: 300, size: 60, speed: 1 },
-    goal: { x: 450, y: 50, size: 30 },
+    hero: { x: 50, y: 50, size: 42, speed: 3 }, // Reduced by 30% (60 * 0.7 = 42)
+    monster: { x: 400, y: 300, size: 42, speed: 1 }, // Reduced by 30% (60 * 0.7 = 42)
+    goal: { x: 450, y: 50, size: 21 }, // Reduced by 30% (30 * 0.7 = 21)
     isRunning: true,
     isWon: false,
     isLost: false
@@ -130,6 +130,12 @@ const joystickState = {
 function initJoystick() {
     const joystickBase = document.getElementById('joystickBase');
     const joystickStick = document.getElementById('joystickStick');
+    
+    if (!joystickBase || !joystickStick) {
+        setTimeout(initJoystick, 100);
+        return;
+    }
+    
     const rect = joystickBase.getBoundingClientRect();
     
     joystickState.baseX = rect.left + rect.width / 2;
@@ -139,8 +145,12 @@ function initJoystick() {
     joystickState.stickX = joystickState.baseX;
     joystickState.stickY = joystickState.baseY;
     
-    // Reset stick position
-    updateJoystickPosition(joystickState.baseX, joystickState.baseY);
+    // Reset stick position to center (CSS already centers it with translate(-50%, -50%))
+    // We just need to reset the additional offset
+    joystickStick.style.transform = 'translate(-50%, -50%)';
+    joystickState.currentX = joystickState.baseX;
+    joystickState.currentY = joystickState.baseY;
+    joystickState.direction = null;
 }
 
 // Update joystick visual position
@@ -162,10 +172,10 @@ function updateJoystickPosition(x, y) {
     joystickState.stickX = x;
     joystickState.stickY = y;
     
-    // Update visual position
+    // Update visual position (add offset to the base centered position)
     const offsetX = x - joystickState.baseX;
     const offsetY = y - joystickState.baseY;
-    joystickStick.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    joystickStick.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
     
     // Calculate direction
     const deadZone = joystickState.baseRadius * 0.3; // 30% dead zone
@@ -191,13 +201,16 @@ function updateJoystickPosition(x, y) {
 function resetJoystick() {
     joystickState.isActive = false;
     joystickState.direction = null;
-    updateJoystickPosition(joystickState.baseX, joystickState.baseY);
+    const joystickStick = document.getElementById('joystickStick');
+    if (joystickStick) {
+        // Reset to center position (CSS uses translate(-50%, -50%) for centering)
+        joystickStick.style.transform = 'translate(-50%, -50%)';
+    }
+    joystickState.currentX = joystickState.baseX;
+    joystickState.currentY = joystickState.baseY;
 }
 
 // Joystick event handlers
-const joystickBase = document.getElementById('joystickBase');
-const joystickStick = document.getElementById('joystickStick');
-
 function getTouchPosition(e) {
     const touch = e.touches ? e.touches[0] : e;
     return {
@@ -226,23 +239,43 @@ function handleJoystickEnd(e) {
     resetJoystick();
 }
 
-// Touch events
-joystickBase.addEventListener('touchstart', handleJoystickStart, { passive: false });
-joystickBase.addEventListener('touchmove', handleJoystickMove, { passive: false });
-joystickBase.addEventListener('touchend', handleJoystickEnd, { passive: false });
-joystickBase.addEventListener('touchcancel', handleJoystickEnd, { passive: false });
+// Setup joystick event listeners (only once)
+let joystickEventsSetup = false;
 
-// Mouse events (for testing on desktop)
-joystickBase.addEventListener('mousedown', handleJoystickStart);
-document.addEventListener('mousemove', handleJoystickMove);
-document.addEventListener('mouseup', handleJoystickEnd);
+function setupJoystickEvents() {
+    if (joystickEventsSetup) return;
+    
+    const joystickBase = document.getElementById('joystickBase');
+    if (!joystickBase) {
+        setTimeout(setupJoystickEvents, 100);
+        return;
+    }
+    
+    joystickEventsSetup = true;
+    
+    // Touch events
+    joystickBase.addEventListener('touchstart', handleJoystickStart, { passive: false });
+    joystickBase.addEventListener('touchmove', handleJoystickMove, { passive: false });
+    joystickBase.addEventListener('touchend', handleJoystickEnd, { passive: false });
+    joystickBase.addEventListener('touchcancel', handleJoystickEnd, { passive: false });
+    
+    // Mouse events (for testing on desktop)
+    joystickBase.addEventListener('mousedown', handleJoystickStart);
+    document.addEventListener('mousemove', handleJoystickMove);
+    document.addEventListener('mouseup', handleJoystickEnd);
+}
 
 // Initialize joystick on load
 window.addEventListener('load', () => {
-    setTimeout(initJoystick, 100);
+    setTimeout(() => {
+        initJoystick();
+        setupJoystickEvents();
+    }, 200);
 });
 window.addEventListener('resize', () => {
-    setTimeout(initJoystick, 100);
+    setTimeout(() => {
+        initJoystick();
+    }, 100);
 });
 
 // Game loop - update hero position based on joystick
