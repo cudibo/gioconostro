@@ -49,13 +49,135 @@ images.hero.onload = images.monster.onload = images.map.onload = () => {
 // Drag and Drop functionality
 let draggedBlock = null;
 let draggedElement = null;
+let touchStartPos = null;
+let isDragging = false;
 
 // Store original blocks for reference
 const originalBlocks = new Map();
 
+// Helper function to add block to workspace or loop
+function addBlockToTarget(blockElement, targetContainer) {
+    const blockClone = blockElement.cloneNode(true);
+    blockClone.classList.remove('dragging');
+    blockClone.classList.add('block-in-workspace');
+    blockClone.draggable = false;
+    
+    // Add delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.textContent = '×';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        blockClone.remove();
+        // Show empty message if workspace is empty
+        if (targetContainer === workspace && (workspace.children.length === 0 || (workspace.children.length === 1 && workspace.querySelector('.empty-message')))) {
+            workspace.innerHTML = '<p class="empty-message">Trascina qui i blocchi per creare il tuo programma</p>';
+        }
+    };
+    deleteBtn.onmouseenter = (e) => e.stopPropagation();
+    blockClone.appendChild(deleteBtn);
+    
+    // Handle loop blocks
+    if (blockClone.dataset.command === 'repeat') {
+        const loopContainer = document.createElement('div');
+        loopContainer.className = 'loop-container';
+        
+        const loopHeader = document.createElement('div');
+        loopHeader.className = 'loop-header';
+        loopHeader.innerHTML = blockClone.innerHTML;
+        const headerDeleteBtn = loopHeader.querySelector('.delete-btn');
+        if (headerDeleteBtn) {
+            headerDeleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                loopContainer.remove();
+                if (workspace.children.length === 0 || (workspace.children.length === 1 && workspace.querySelector('.empty-message'))) {
+                    workspace.innerHTML = '<p class="empty-message">Trascina qui i blocchi per creare il tuo programma</p>';
+                }
+            };
+            headerDeleteBtn.onmouseenter = (e) => e.stopPropagation();
+        }
+        
+        const loopContent = document.createElement('div');
+        loopContent.className = 'loop-content';
+        
+        loopContainer.appendChild(loopHeader);
+        loopContainer.appendChild(loopContent);
+        
+        // Make loop content droppable
+        setupDropZone(loopContent);
+        
+        targetContainer.appendChild(loopContainer);
+    } else {
+        targetContainer.appendChild(blockClone);
+    }
+    
+    // Remove empty message if present
+    const emptyMsg = targetContainer.querySelector('.empty-message');
+    if (emptyMsg) emptyMsg.remove();
+}
+
+// Setup drop zone for workspace and loop-content
+function setupDropZone(dropZone) {
+    // Only add desktop handlers if not already added
+    if (!dropZone.hasAttribute('data-dropzone-setup')) {
+        dropZone.setAttribute('data-dropzone-setup', 'true');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            // Highlight loop-content on drag over
+            if (dropZone.classList.contains('loop-content')) {
+                dropZone.style.backgroundColor = '#f0f0f0';
+            }
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            // Only change background if actually leaving the drop zone
+            if (dropZone.classList.contains('loop-content') && !dropZone.contains(e.relatedTarget)) {
+                dropZone.style.backgroundColor = 'white';
+            }
+        });
+        
+        // Touch support
+        dropZone.addEventListener('touchmove', (e) => {
+            if (isDragging && draggedElement) {
+                e.preventDefault();
+                // Highlight loop-content on touch move
+                if (dropZone.classList.contains('loop-content')) {
+                    dropZone.style.backgroundColor = '#f0f0f0';
+                }
+            }
+        }, { passive: false });
+        
+        dropZone.addEventListener('touchend', (e) => {
+            if (isDragging && draggedElement) {
+                const touch = e.changedTouches[0];
+                const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                if (dropZone.contains(elementBelow) || elementBelow === dropZone) {
+                    e.preventDefault();
+                    if (draggedElement.dataset.command !== 'repeat') {
+                        addBlockToTarget(draggedElement, dropZone);
+                    }
+                }
+                
+                // Reset background
+                if (dropZone.classList.contains('loop-content')) {
+                    dropZone.style.backgroundColor = 'white';
+                }
+                
+                isDragging = false;
+                draggedElement = null;
+                document.querySelectorAll('.block').forEach(b => b.classList.remove('dragging'));
+            }
+        });
+    }
+}
+
 document.querySelectorAll('.block').forEach(block => {
     originalBlocks.set(block.dataset.command, block);
     
+    // Desktop drag and drop
     block.addEventListener('dragstart', (e) => {
         draggedBlock = block.cloneNode(true);
         draggedElement = block;
@@ -66,18 +188,77 @@ document.querySelectorAll('.block').forEach(block => {
 
     block.addEventListener('dragend', (e) => {
         block.classList.remove('dragging');
-        // Don't reset draggedElement here - let the drop handler do it
-        // This ensures draggedElement is available during drop
+    });
+    
+    // Touch support for mobile
+    block.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchStartPos = {
+            x: touch.clientX,
+            y: touch.clientY,
+            time: Date.now()
+        };
+        draggedElement = block;
+        block.classList.add('dragging');
+    }, { passive: false });
+    
+    block.addEventListener('touchmove', (e) => {
+        if (!touchStartPos || !draggedElement) return;
+        
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartPos.x);
+        const deltaY = Math.abs(touch.clientY - touchStartPos.y);
+        
+        // Start dragging if moved more than 10px
+        if (deltaX > 10 || deltaY > 10) {
+            isDragging = true;
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    block.addEventListener('touchend', (e) => {
+        if (!touchStartPos) return;
+        
+        const touch = e.changedTouches[0];
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (isDragging && draggedElement) {
+            // Find drop target
+            const workspaceArea = document.getElementById('workspace');
+            const loopContent = elementBelow?.closest('.loop-content');
+            
+            if (loopContent) {
+                if (draggedElement.dataset.command !== 'repeat') {
+                    addBlockToTarget(draggedElement, loopContent);
+                }
+            } else if (workspaceArea && (workspaceArea.contains(elementBelow) || elementBelow === workspaceArea)) {
+                if (!elementBelow?.closest('.loop-content')) {
+                    addBlockToTarget(draggedElement, workspaceArea);
+                }
+            }
+        }
+        
+        isDragging = false;
+        draggedElement = null;
+        touchStartPos = null;
+        block.classList.remove('dragging');
+    });
+    
+    block.addEventListener('touchcancel', () => {
+        isDragging = false;
+        draggedElement = null;
+        touchStartPos = null;
+        block.classList.remove('dragging');
     });
 });
 
 const workspace = document.getElementById('workspace');
 
-workspace.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-});
+// Setup workspace as drop zone
+setupDropZone(workspace);
 
+// Desktop drop handler for workspace
 workspace.addEventListener('drop', (e) => {
     // Don't handle if dropping on loop-content (handled separately)
     if (e.target.closest('.loop-content')) {
@@ -87,139 +268,17 @@ workspace.addEventListener('drop', (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (draggedElement) {
-        const blockClone = draggedElement.cloneNode(true);
-        blockClone.classList.remove('dragging');
-        blockClone.classList.add('block-in-workspace');
-        blockClone.draggable = false;
-        
-        // Add delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = '×';
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            blockClone.remove();
-            // Show empty message if workspace is empty
-            if (workspace.children.length === 0 || (workspace.children.length === 1 && workspace.querySelector('.empty-message'))) {
-                workspace.innerHTML = '<p class="empty-message">Trascina qui i blocchi per creare il tuo programma</p>';
-            }
-        };
-        // Prevent hover effect on block when hovering delete button
-        deleteBtn.onmouseenter = (e) => e.stopPropagation();
-        blockClone.appendChild(deleteBtn);
-        
-        // Handle loop blocks
-        if (blockClone.dataset.command === 'repeat') {
-            const loopContainer = document.createElement('div');
-            loopContainer.className = 'loop-container';
-            
-            const loopHeader = document.createElement('div');
-            loopHeader.className = 'loop-header';
-            loopHeader.innerHTML = blockClone.innerHTML;
-            const headerDeleteBtn = loopHeader.querySelector('.delete-btn');
-            if (headerDeleteBtn) {
-                headerDeleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    loopContainer.remove();
-                    // Show empty message if workspace is empty
-                    if (workspace.children.length === 0 || (workspace.children.length === 1 && workspace.querySelector('.empty-message'))) {
-                        workspace.innerHTML = '<p class="empty-message">Trascina qui i blocchi per creare il tuo programma</p>';
-                    }
-                };
-                headerDeleteBtn.onmouseenter = (e) => e.stopPropagation();
-            }
-            
-            const loopContent = document.createElement('div');
-            loopContent.className = 'loop-content';
-            
-            loopContainer.appendChild(loopHeader);
-            loopContainer.appendChild(loopContent);
-            
-            // Make loop content droppable
-            loopContent.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.dataTransfer.dropEffect = 'copy';
-                loopContent.style.backgroundColor = '#f0f0f0';
-            });
-            
-            loopContent.addEventListener('dragleave', (e) => {
-                // Only change background if actually leaving the loop-content area
-                if (!loopContent.contains(e.relatedTarget)) {
-                    loopContent.style.backgroundColor = 'white';
-                }
-            });
-            
-            loopContent.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                loopContent.style.backgroundColor = 'white';
-                
-                // Get the dragged element (either from palette or from workspace)
-                let sourceBlock = draggedElement;
-                
-                // If draggedElement is not available, try to get from dataTransfer
-                if (!sourceBlock) {
-                    const command = e.dataTransfer.getData('text/plain');
-                    if (command) {
-                        sourceBlock = originalBlocks.get(command);
-                    }
-                }
-                
-                // If still not found, try to find by checking all blocks
-                if (!sourceBlock) {
-                    // This shouldn't happen, but as fallback
-                    const allBlocks = document.querySelectorAll('.block');
-                    allBlocks.forEach(block => {
-                        if (block.classList.contains('dragging')) {
-                            sourceBlock = block;
-                        }
-                    });
-                }
-                
-                if (sourceBlock && sourceBlock.dataset.command !== 'repeat') {
-                    addBlockToWorkspace(sourceBlock, loopContent);
-                    // Remove empty message if present in loop content
-                    const emptyMsg = loopContent.querySelector('.empty-message');
-                    if (emptyMsg) emptyMsg.remove();
-                }
-                
-                // Reset draggedElement after drop
-                draggedElement = null;
-            });
-            
-            workspace.appendChild(loopContainer);
-        } else {
-            workspace.appendChild(blockClone);
-        }
-        
-        // Remove empty message if present
-        const emptyMsg = workspace.querySelector('.empty-message');
-        if (emptyMsg) emptyMsg.remove();
-        
-        // Reset draggedElement after successful drop
+        addBlockToTarget(draggedElement, workspace);
         draggedElement = null;
     }
 });
 
-function addBlockToWorkspace(blockElement, container) {
-    const blockClone = blockElement.cloneNode(true);
-    blockClone.classList.remove('dragging');
-    blockClone.classList.add('block-in-workspace');
-    blockClone.draggable = false;
-    
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.textContent = '×';
-    deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        blockClone.remove();
-    };
-    deleteBtn.onmouseenter = (e) => e.stopPropagation();
-    blockClone.appendChild(deleteBtn);
-    
-    container.appendChild(blockClone);
-}
+// Touch support for workspace
+workspace.addEventListener('touchmove', (e) => {
+    if (isDragging && draggedElement) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
 
 // Parse commands from workspace
@@ -528,4 +587,5 @@ document.getElementById('clear-btn').addEventListener('click', clearWorkspace);
 
 // Initial draw
 drawGame();
+
 
