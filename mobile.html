@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Gioco Interattivo Mobile - Evita il Mostro</title>
+    <link rel="stylesheet" href="mobile-style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <header>
+            <h1>🎮 Gioco Interattivo</h1>
+            <p>Usa il joystick per muovere l'eroe e raggiungere l'obiettivo!</p>
+        </header>
+
+        <div class="game-wrapper">
+            <div class="game-canvas-container">
+                <canvas id="gameCanvas"></canvas>
+                <div id="game-status" class="game-status"></div>
+            </div>
+
+            <div class="joystick-container">
+                <div class="joystick-base" id="joystickBase">
+                    <div class="joystick-stick" id="joystickStick"></div>
+                </div>
+                <div class="joystick-label">Trascina per muovere</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="reset-btn" class="btn btn-reset">🔄 Reset</button>
+        </div>
+    </div>
+
+    <script src="mobile-game.js"></script>
+</body>
+</html>
+
